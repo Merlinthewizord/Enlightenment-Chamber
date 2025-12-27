@@ -20,7 +20,7 @@ async function chatWithModel({ model, messages, openaiClient, anthropicClient })
     const response = await anthropicClient.messages.create({
       model,
       system: systemPrompt,
-      max_tokens: 1024,
+      max_completion_tokens: 1024,
       messages,
     });
     return response.content[0].text;
@@ -90,7 +90,7 @@ export async function POST(request) {
 
   const numExchanges = clampExchanges(Number(payload?.num_exchanges ?? 6));
   const model1 = process.env.MODEL_1 || "gpt-4";
-  const model2 = process.env.MODEL_2 || "claude-3-opus-20240229";
+  const model2 = process.env.MODEL_2 || "claude-opus-4-5-20251101";
   const openaiKey = process.env.OPENAI_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
 

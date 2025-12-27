@@ -49,4 +49,4 @@ instances about enlightenment.
 You can change the models by setting environment variables:
 
 - `MODEL_1` (default `gpt-4`)
-- `MODEL_2` (default `claude-3-opus-20240229`)
+- `MODEL_2` (default `claude-opus-4-5-20251101`)
