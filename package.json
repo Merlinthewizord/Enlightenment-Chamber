@@ -1,0 +1,17 @@
+{
+  "name": "enlightenment-chamber",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.27.0",
+    "next": "14.2.5",
+    "openai": "4.56.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  }
+}

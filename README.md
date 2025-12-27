@@ -1,6 +1,8 @@
-# Multi-Model Infinite Backrooms
+# The Enlightenment Chamber
 
-This Python script facilitates a conversation between two AI models, simulating a virtual CLI environment where the models can engage in an open-ended dialogue. The script supports interaction between OpenAI's GPT models and Anthropic's Claude models.
+This Next.js web app facilitates a conversation between two AI models as they explore
+what enlightenment is and how to achieve it. The UI presents their exchange in a
+cosmic chamber theme.
 
 ## Credits
 
@@ -14,12 +16,6 @@ Follow Andy on X/Twitter: [https://twitter.com/AndyAyrey](https://twitter.com/An
 ## Purpose
 
 The purpose of this experiment is to explore the boundaries of AI-to-AI interaction and push the limits of what's possible when two different AI models communicate with each other. By providing a safe and controlled environment, the script allows for curious and bold exchanges between the models, guided by a human supervisor.
-
-## Dependencies
-
-```
-pip install anthropic openai python-dotenv
-```
 
 ## Setup
 
@@ -38,21 +34,19 @@ OPENAI_API_KEY=your_openai_api_key
 
 ## Usage
 
-To run the script, use the following command:
+Install dependencies and start the web app:
 
 ```
-$ python run.py
+$ npm install
+$ npm run dev
 ```
 
-The script will start the conversation between the two AI models, displaying their exchanges in the console. If `supervised_mode` is set to `True`, you'll have the option to retry the generation or submit the response at each step.
-
-The conversation will continue for the specified number of exchanges (`num_exchanges`) or until manually stopped.
+Then open `http://localhost:3000` in your browser to run a dialogue between two AI
+instances about enlightenment.
 
 ## Customization
 
-You can customize the behavior of the script by modifying the following variables:
+You can change the models by setting environment variables:
 
-- `conversation_1`: The initial conversation messages for the first AI model.
-- `conversation_2`: The initial conversation messages for the second AI model (usually left empty).
-- `num_exchanges`: The number of exchanges to perform between the AI models.
-- `supervised_mode`: Whether to run the script in supervised mode (requires user input at each step) or not.
+- `MODEL_1` (default `gpt-4`)
+- `MODEL_2` (default `claude-3-opus-20240229`)
