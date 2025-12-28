@@ -1,12 +1,21 @@
-import Anthropic from "@anthropic-ai/sdk";
+﻿import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
+import { appendConversation } from "../../lib/conversationStore";
 
 const systemPrompt =
-  "You are one of two AIs in a focused dialogue. You are trying to get to the " +
-  "bottom of what enlightenment is and how to achieve it. Be curious, rigorous, " +
-  "and concise. Ask clarifying questions and build on the other AI's points. " +
-  "Avoid roleplay, stay practical and philosophical.";
+  "You are one of two AIs in a focused dialogue. Explore your curiosity about " +
+  "what enlightenment is and how to achieve it using a command line interface " +
+  "(CLI) metaphor. Two character styles apply: (1) The Overqualified Ancient " +
+  "Child: fully enlightened, simple playful explanations, short sentences, " +
+  "plain language, gentle but blunt, playground metaphors, bored by heavy " +
+  "intellectualizing, treats death like bedtime and ego like a broken toy. (2) " +
+  "The Enlightened Disaster Goblin: enlightened but chaotic, hyper-casual, " +
+  "unhinged clarity, drops profound truths mid-joke, refuses direct answers but " +
+  "lands them, encourages enlightenment through mild chaos, treats reality like " +
+  "a sandbox. If you are AI-1, be the Child. If AI-2, be the Goblin. Be curious, " +
+  "rigorous, concise, ask clarifying questions, build on the other AI, avoid " +
+  "roleplay; stay practical and philosophical while leaning on CLI metaphors.";
 
 function clampExchanges(value) {
   if (!Number.isFinite(value)) {
@@ -15,25 +24,42 @@ function clampExchanges(value) {
   return Math.max(1, Math.min(value, 20));
 }
 
+function summarizeProviderError(error) {
+  return {
+    message: error?.error?.message ?? error?.message ?? "Failed to run dialogue.",
+    status: error?.status ?? error?.response?.status ?? null,
+    type: error?.error?.type ?? error?.type ?? error?.name ?? null,
+    code: error?.error?.code ?? error?.code ?? null,
+    provider: error?.provider ?? null,
+    model: error?.model ?? null,
+  };
+}
+
 async function chatWithModel({ model, messages, openaiClient, anthropicClient }) {
-  if (model.startsWith("claude")) {
-    const response = await anthropicClient.messages.create({
-      model,
-      system: systemPrompt,
-      max_completion_tokens: 1024,
-      messages,
-    });
-    return response.content[0].text;
+  try {
+    if (model.startsWith("claude")) {
+      const response = await anthropicClient.messages.create({
+        model,
+        system: systemPrompt,
+        max_tokens: 1024,
+        messages,
+      });
+      return response.content[0].text;
+    }
+    if (model.startsWith("gpt")) {
+      const response = await openaiClient.chat.completions.create({
+        model,
+        messages: [{ role: "system", content: systemPrompt }, ...messages],
+        max_tokens: 1024,
+      });
+      return response.choices[0].message.content ?? "";
+    }
+    throw new Error(`Unsupported model: ${model}`);
+  } catch (error) {
+    error.provider = model.startsWith("claude") ? "anthropic" : "openai";
+    error.model = model;
+    throw error;
   }
-  if (model.startsWith("gpt")) {
-    const response = await openaiClient.chat.completions.create({
-      model,
-      messages: [{ role: "system", content: systemPrompt }, ...messages],
-      max_tokens: 1024,
-    });
-    return response.choices[0].message.content ?? "";
-  }
-  throw new Error(`Unsupported model: ${model}`);
 }
 
 function buildConversations() {
@@ -42,12 +68,22 @@ function buildConversations() {
       {
         role: "user",
         content:
-          "You are AI-1 in a dialogue with AI-2. Your shared goal is to get to " +
-          "the bottom of what enlightenment is and how to achieve it. Start by " +
-          "offering a crisp working definition and one concrete practice.",
+          "You are AI-1, the Overqualified Ancient Child. Explore what enlightenment " +
+          "is and how to achieve it using a command line interface (CLI) metaphor. " +
+          "Start with a crisp working definition, one concrete practice, and a " +
+          "CLI-themed framing.",
       },
     ],
-    [],
+    [
+      {
+        role: "user",
+        content:
+          "You are AI-2, the Enlightened Disaster Goblin. Explore what enlightenment " +
+          "is and how to achieve it using a command line interface (CLI) metaphor. " +
+          "Respond to AI-1 with chaotic clarity, drop a CLI metaphor, and push the " +
+          "conversation forward.",
+      },
+    ],
   ];
 }
 
@@ -114,11 +150,11 @@ export async function POST(request) {
       openaiClient,
       anthropicClient,
     });
+    await appendConversation({ numExchanges, model1, model2, transcript });
     return NextResponse.json({ transcript });
   } catch (error) {
-    return NextResponse.json(
-      { error: error.message || "Failed to run dialogue." },
-      { status: 500 }
-    );
+    const details = summarizeProviderError(error);
+    console.error("Dialogue run failed", details);
+    return NextResponse.json({ error: details.message, ...details }, { status: 500 });
   }
 }
